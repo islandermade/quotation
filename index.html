@@ -5,7 +5,642 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>報價單｜島民制作視覺整合</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>島民制作｜報價單系統</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1a1a;--ink2:#555;--ink3:#888;--ink4:#bbb;
+  --line:#e0ddd6;--bg:#f4f3ef;--white:#ffffff;
+  --blue:#2563eb;--blue-l:#eff6ff;--blue-b:#bfdbfe;
+  --green:#16a34a;--green-l:#f0fdf4;
+  --amber:#d97706;--amber-l:#fffbeb;
+  --font:'Helvetica Neue',Arial,'PingFang TC','Noto Sans TC',sans-serif;
+  --r:8px;--r2:12px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* ── MODE SWITCH ── */
+.mode-bar{background:var(--white);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100}
+.mode-bar .logo{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--ink)}
+.mode-bar .logo span{color:var(--ink3);font-weight:400}
+.mode-tabs{display:flex;gap:4px;background:var(--bg);border-radius:var(--r);padding:3px}
+.mode-tab{padding:6px 14px;font-size:12px;font-weight:600;font-family:var(--font);border:none;background:none;border-radius:6px;cursor:pointer;color:var(--ink3);transition:all .15s}
+.mode-tab.active{background:var(--white);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.mode-hint{font-size:11px;color:var(--ink3)}
+
+/* ── SHARED ── */
+.page{display:none;padding:1.5rem 1rem 4rem;max-width:960px;margin:0 auto}
+.page.active{display:block}
+input,select,textarea{font-family:var(--font);font-size:13px;color:var(--ink);background:#fafaf7;border:1px solid var(--line);border-radius:var(--r);padding:7px 10px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ink)}
+input[readonly]{background:#f0efe9;color:var(--ink3)}
+textarea{resize:vertical;line-height:1.6}
+label{font-size:11px;color:var(--ink3);display:block;margin-bottom:3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn{padding:9px 18px;font-size:13px;font-weight:700;font-family:var(--font);border:none;border-radius:var(--r);cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{opacity:.85}
+.btn-outline{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn-outline:hover{background:var(--bg)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{opacity:.88}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);padding:1.25rem}
+
+/* ── DESIGNER MODE ── */
+.designer-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+@media(max-width:760px){.designer-layout{grid-template-columns:1fr}}
+
+/* 品項庫 */
+.item-lib{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;position:sticky;top:60px}
+.item-lib-header{padding:12px 14px;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--ink)}
+.lib-cat{border-bottom:1px solid var(--line)}
+.lib-cat-title{padding:8px 14px;font-size:11px;font-weight:700;color:var(--ink3);background:#fafaf7;letter-spacing:.05em;text-transform:uppercase}
+.lib-item{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #f0efe9;cursor:pointer;transition:background .1s}
+.lib-item:last-child{border-bottom:none}
+.lib-item:hover{background:#f7f6f2}
+.lib-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--blue);flex-shrink:0;cursor:pointer}
+.lib-item-name{font-size:12px;color:var(--ink);flex:1}
+.lib-item-price{font-size:11px;color:var(--ink3);white-space:nowrap}
+
+/* 右側表單 */
+.form-right{display:flex;flex-direction:column;gap:14px}
+.client-card,.items-card,.settings-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);padding:1.25rem}
+
+/* 報價項目 */
+.quote-item{border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.qi-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fafaf7;border-bottom:1px solid var(--line)}
+.qi-num{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qi-name{font-size:13px;font-weight:700;flex:1;outline:none;background:none;border:none;font-family:var(--font);color:var(--ink)}
+.qi-del{background:none;border:none;color:var(--ink4);cursor:pointer;font-size:18px;padding:0 4px;line-height:1}
+.qi-del:hover{color:#c00}
+.qi-body{padding:12px}
+.qi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.qi-flow{font-size:11px;color:var(--ink3);background:#f7f6f2;border-radius:6px;padding:8px 10px;line-height:1.6;margin-bottom:8px}
+.qi-flow-label{font-size:10px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+
+/* ── CLIENT MODE ── */
+.client-doc{max-width:780px;margin:0 auto}
+.client-header-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);padding:1.5rem;margin-bottom:14px}
+.client-proj-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.client-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--ink2)}
+.client-meta-row{display:flex;gap:6px}
+.client-meta-label{color:var(--ink3)}
+.client-items-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;margin-bottom:14px}
+.client-item{border-bottom:1px solid var(--line);padding:14px 16px;transition:background .1s}
+.client-item:last-child{border-bottom:none}
+.client-item.is-confirmed{background:var(--blue-l)}
+.client-item.is-discuss{background:var(--amber-l)}
+.ci-top{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.ci-checks{display:flex;flex-direction:column;gap:4px;flex-shrink:0;padding-top:2px}
+.ci-check-btn{display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;white-space:nowrap}
+.ci-check-btn input{width:13px;height:13px;cursor:pointer}
+.ci-check-btn.confirm{accent-color:var(--blue);color:var(--blue)}
+.ci-check-btn.discuss{accent-color:var(--amber);color:var(--amber)}
+.ci-content{flex:1}
+.ci-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.ci-items{font-size:12px;color:var(--ink2);line-height:1.7}
+.ci-flow{font-size:11px;color:var(--ink3);background:#f7f6f2;border-radius:6px;padding:8px 10px;line-height:1.6;margin-top:6px}
+.ci-price{font-size:15px;font-weight:700;color:var(--blue);white-space:nowrap;padding-top:2px}
+.client-note{margin-bottom:14px}
+.client-note textarea{min-height:72px}
+.client-summary{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);padding:1.25rem}
+.cs-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:4px 0;border-bottom:1px solid var(--line)}
+.cs-row.total{font-size:15px;font-weight:700;color:var(--ink);padding-top:8px;border-bottom:none}
+.flagged-section{background:var(--white);border:1px solid #fde68a;border-left:4px solid var(--amber);border-radius:var(--r2);padding:1rem 1.25rem;margin-bottom:14px}
+.flagged-title{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px}
+.flagged-item{font-size:12px;color:var(--ink2);padding:4px 0;border-bottom:1px solid #fef3c7;display:flex;justify-content:space-between}
+.flagged-item:last-child{border-bottom:none}
+
+/* ── PRINT / OUTPUT ── */
+@media print{
+  body{background:#fff}
+  .mode-bar,.page:not(.active),.no-print{display:none!important}
+  .page.active{display:block;padding:0;max-width:100%}
+  .quote-out{border:none;border-radius:0;box-shadow:none}
+  @page{size:A4;margin:12mm 14mm}
+}
+.quote-out{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);padding:2rem;max-width:780px;margin:0 auto}
+.qo-top{text-align:center;padding-bottom:1.25rem;margin-bottom:1.25rem;border-bottom:1.5px solid var(--ink)}
+.qo-co{font-size:15px;font-weight:700;letter-spacing:.05em}
+.qo-title{font-size:20px;font-weight:700;letter-spacing:.2em;margin:4px 0 2px}
+.qo-region{font-size:11px;color:var(--ink3)}
+.qo-meta{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:1rem}
+.qo-meta-block{padding:5px 0}
+.qo-meta-block:nth-child(odd){border-right:1px solid var(--line);padding-right:12px}
+.qo-meta-block:nth-child(even){padding-left:12px}
+.qo-mk{font-size:10px;color:var(--ink3)}
+.qo-mv{font-size:12px;font-weight:700;margin-top:1px}
+.qo-bank{background:#f7f6f2;border-radius:6px;padding:8px 12px;font-size:10px;color:var(--ink3);line-height:1.8;margin-bottom:1rem}
+.qo-bank strong{color:var(--ink);font-weight:700}
+.qo-table{width:100%;border-collapse:collapse;margin-bottom:1rem;font-size:11px;table-layout:fixed}
+.qo-table col.c0{width:36px}
+.qo-table col.c1{width:18%}
+.qo-table col.c2{}
+.qo-table col.c3{width:80px}
+.qo-table th{padding:6px 8px;background:#f2f1ed;font-weight:700;text-align:left;border:1px solid var(--line);font-size:10px;letter-spacing:.04em}
+.qo-table td{padding:8px 8px;border:1px solid var(--line);vertical-align:top}
+.qo-table td.r{text-align:right}
+.qo-table td.c{text-align:center}
+.qo-item-name{font-weight:700;font-size:11px;margin-bottom:3px}
+.qo-item-flow{font-size:10px;color:var(--ink2);line-height:1.5;margin-bottom:3px}
+.qo-item-content{font-size:10px;color:var(--ink);line-height:1.6}
+.qo-notes{font-size:10px;color:var(--ink3);line-height:1.8;padding:8px 0;border-top:1px solid var(--line);margin-bottom:.75rem}
+.qo-totals{display:flex;justify-content:flex-end;margin-bottom:1.25rem}
+.qo-total-box{min-width:200px}
+.qo-tr{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);padding:3px 0;border-bottom:1px solid var(--line)}
+.qo-tr.grand{font-size:14px;font-weight:700;color:var(--ink);padding:6px 0;border-bottom:none}
+.qo-sig{display:grid;grid-template-columns:1fr 1fr;gap:2rem;padding-top:1rem;border-top:1px solid var(--line)}
+.qo-sig-box{text-align:center}
+.qo-sig-label{font-size:10px;color:var(--ink3)}
+.qo-sig-line{border-bottom:1px solid #bbb;margin:24px 0 4px}
+.output-actions{display:flex;gap:10px;justify-content:flex-end;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<!-- ── MODE BAR ── -->
+<div class="mode-bar">
+  <div class="logo">島民制作 <span>報價單系統</span></div>
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('designer')">設計師</button>
+    <button class="mode-tab" onclick="setMode('client')">客戶確認</button>
+    <button class="mode-tab" onclick="setMode('output')">輸出PDF</button>
+  </div>
+  <div class="mode-hint" id="modeHint">填寫報價內容</div>
+</div>
+
+<!-- ══════════════════════════════
+     DESIGNER MODE
+══════════════════════════════ -->
+<div class="page active" id="page-designer">
+  <div class="designer-layout">
+
+    <!-- 左：品項庫 -->
+    <div class="item-lib">
+      <div class="item-lib-header">服務品項庫</div>
+      <div id="libContainer"></div>
+    </div>
+
+    <!-- 右：表單 -->
+    <div class="form-right">
+
+      <!-- 客戶資訊 -->
+      <div class="client-card">
+        <div class="sec-title">客戶資訊</div>
+        <div class="g2" style="margin-bottom:8px">
+          <div><label>專案名稱</label><input id="d_proj" placeholder="例：雲泊和旅視覺設計" oninput="sync()"></div>
+          <div><label>客戶公司名稱</label><input id="d_co" placeholder="例：洄洄山林地方設計有限合夥" oninput="sync()"></div>
+        </div>
+        <div class="g3">
+          <div><label>統一編號</label><input id="d_tax" placeholder="42906098" oninput="sync()"></div>
+          <div><label>報價日期</label><input type="date" id="d_qdate" oninput="sync()"></div>
+          <div><label>有效日期</label><input type="date" id="d_vdate" oninput="sync()"></div>
+        </div>
+      </div>
+
+      <!-- 報價項目 -->
+      <div class="items-card">
+        <div class="sec-title">報價項目</div>
+        <div id="quoteItems"></div>
+        <div style="color:var(--ink3);font-size:12px;text-align:center;padding:8px 0" id="emptyHint">← 從左側品項庫勾選要報價的服務</div>
+      </div>
+
+      <!-- 費用設定 -->
+      <div class="settings-card">
+        <div class="sec-title">費用設定</div>
+        <div class="g3" style="margin-bottom:10px">
+          <div><label>營業稅</label>
+            <select id="d_tax_rate" onchange="sync()">
+              <option value="0">不含稅</option>
+              <option value="0.05" selected>含稅 5%</option>
+            </select>
+          </div>
+          <div><label>頭款比例</label>
+            <select id="d_deposit" onchange="sync()">
+              <option value="30">30%</option>
+              <option value="50" selected>50%</option>
+              <option value="100">全額</option>
+            </select>
+          </div>
+          <div><label>小計</label><input readonly id="d_sub" value="NT$ 0"></div>
+        </div>
+        <div class="g2">
+          <div><label>總金額（含稅）</label><input readonly id="d_total" value="NT$ 0" style="font-weight:700;font-size:14px"></div>
+          <div><label>頭款金額</label><input readonly id="d_head" value="NT$ 0"></div>
+        </div>
+      </div>
+
+      <!-- 備註 -->
+      <div class="client-card">
+        <div class="sec-title">備註條款</div>
+        <textarea id="d_notes" rows="5" oninput="sync()"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="setMode('client')">預覽客戶頁面</button>
+        <button class="btn btn-primary" onclick="setMode('output')">輸出報價單 PDF</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     CLIENT MODE
+══════════════════════════════ -->
+<div class="page" id="page-client">
+  <div class="client-doc">
+
+    <div class="client-header-card">
+      <div class="client-proj-title" id="c_proj">（專案名稱）</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">報價單位：島民制作視覺整合</div>
+      <div class="client-meta">
+        <div class="client-meta-row"><span class="client-meta-label">客戶名稱</span><span id="c_co">—</span></div>
+        <div class="client-meta-row"><span class="client-meta-label">報價日期</span><span id="c_qdate">—</span></div>
+        <div class="client-meta-row"><span class="client-meta-label">統一編號</span><span id="c_tax">—</span></div>
+        <div class="client-meta-row"><span class="client-meta-label">有效日期</span><span id="c_vdate">—</span></div>
+      </div>
+    </div>
+
+    <div style="background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r);padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:14px">
+      請勾選您確認的項目，或標記需要討論的項目，完成後截圖或告知設計師。
+    </div>
+
+    <div class="client-items-card" id="clientItems"></div>
+
+    <div class="flagged-section" id="flaggedSection" style="display:none">
+      <div class="flagged-title">已標記需要討論的項目</div>
+      <div id="flaggedList"></div>
+    </div>
+
+    <div class="client-note card" style="margin-bottom:14px">
+      <div class="sec-title">備註 / 問題</div>
+      <textarea id="c_note" rows="3" placeholder="請填入您的問題或備註..."></textarea>
+    </div>
+
+    <div class="client-summary">
+      <div class="cs-row"><span>小計</span><span id="cs_sub">NT$ 0</span></div>
+      <div class="cs-row" id="cs_tax_row"><span>營業稅 (5%)</span><span id="cs_tax">NT$ 0</span></div>
+      <div class="cs-row total"><span>總金額</span><span id="cs_total">NT$ 0</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     OUTPUT MODE
+══════════════════════════════ -->
+<div class="page" id="page-output">
+  <div class="output-actions no-print">
+    <button class="btn btn-outline" onclick="setMode('designer')">← 回到編輯</button>
+    <button class="btn btn-primary" onclick="window.print()">列印 / 輸出 PDF</button>
+  </div>
+
+  <div class="quote-out" id="quoteOut"></div>
+</div>
+
+<script>
+/* ══════════════════
+   服務品項庫資料
+══════════════════ */
+const CATALOG = [
+  { cat:'品牌識別', items:[
+    { id:'brand_plan', name:'品牌規劃', price:0, spec:'1式',
+      flow:'品牌設計流程將從2-3組視覺風格版開始發展，在確認方向後進行設計提案。第一次設計稿提案將會提出至少2款設計方向進行討論且擇1進行2至3次的小幅度修改直至完稿。',
+      content:'①品牌識別問卷一份\n②品牌識別手冊一本\n③中英文標準字設計應用一式\n④色彩計劃一式\n⑤延伸輔助圖形應用' },
+    { id:'brand_ext', name:'品牌延伸物', price:35000, spec:'依項目',
+      flow:'品牌logo完稿後，將提供延伸物，例如：名片、衣服等，所需設計每項目提供1-2款供挑選。',
+      content:'①延伸物設計（依需求填入）' },
+    { id:'logo', name:'Logo設計', price:25000, spec:'2款',
+      flow:'Logo設計流程將從2-3組視覺風格版開始發展，確認方向後進行細化，提供AI/PDF完稿檔案。修改次數：確認方向後修改1次。',
+      content:'①Logo設計（含中英文版本）\n②標準字設計\n③黑白稿\n④AI/PDF原始檔' },
+    { id:'ip', name:'IP角色設計', price:20000, spec:'1式',
+      flow:'IP角色設計流程將從2-3組視覺風格版開始發展，在確認方向後進行設計提案。第一次設計稿提案將會提出至少2款設計方向進行討論且擇1進行2至3次的小幅度修改直至完稿。',
+      content:'①角色企劃設計\n②角色比例尺與三視圖（正、側、背面）' },
+    { id:'peripheral', name:'延伸周邊', price:8000, spec:'依項目',
+      flow:'依確認角色後進行周邊延伸設計，每項提供1-2款供挑選。',
+      content:'①馬克杯\n②T恤\n③徽章\n④提袋' },
+  ]},
+  { cat:'主視覺設計', items:[
+    { id:'kv', name:'主視覺設計', price:30000, spec:'2款',
+      flow:'主視覺設計流程將從2-3組視覺風格版開始發展，在確認方向後進行設計提案。第一次設計稿提案將會提出至少2款設計方向進行討論及收斂，於後進行二至三次的視覺細節設計深化提案，確認主視覺設計內容後提供細節如顏色、文字、圖案修改3次，一同整合主視覺設計樣貌。',
+      content:'①主視覺概念釋義\n②主視覺直式海報（印刷用A1尺寸：297mm×420mm）' },
+  ]},
+  { cat:'印刷物', items:[
+    { id:'poster', name:'活動宣傳海報', price:8000, spec:'200張，A2',
+      flow:'提供2款海報設計方向，確認後進行細化，完稿後送印。',
+      content:'①直式海報設計\n②橫式海報設計\n③印刷完稿（含出血）' },
+    { id:'booklet', name:'手冊設計規劃', price:15000, spec:'1本',
+      flow:'第一次設計稿提案將會提出至少2款設計方向進行討論及收斂，於後進行二至三次的視覺細節設計深化提案，確認主視覺設計內容後提供細節如顏色、文字、圖案無限制修改，一同整合主視覺設計樣貌。',
+      content:'①封面設計\n②內頁版型設計\n③印刷完稿' },
+    { id:'sticker', name:'貼紙設計', price:5000, spec:'2款',
+      flow:'一次設計提案，提案將會提出2款設計方向進行討論且擇1進行2次的小幅度修改直至完稿。',
+      content:'①貼紙設計稿\n②印刷完稿' },
+  ]},
+  { cat:'社群行銷', items:[
+    { id:'marketing', name:'品牌行銷企劃（一季）', price:0, spec:'1季',
+      flow:'前期由品牌定位著手進行討論及規劃，後進行商品行銷提案。確定行銷提案後，提供至少2款行銷圖文視覺風格版及文案內容提案，在確認方向後開始進行設計。每張圖文提供1版彩稿，進行圖文內容微調。短影片將會提供分鏡文字內容進行討論，擇後進行拍攝及初剪。品牌形象影片將會提供分鏡文字內容進行討論，後進行拍攝及初剪。',
+      content:'①品牌定位（品牌故事定位、使用者流程）\n②商品行銷企劃（行銷策略）\n③行銷推廣：3篇圖文＋3支形象風格短影片＋1支品牌形象影片' },
+    { id:'post', name:'貼文設計', price:3000, spec:'1款',
+      flow:'透過業主提供的文字與照片內容，製作貼文，應用在社群平台。',
+      content:'①社群貼文主圖\n②限時動態版式' },
+  ]},
+  { cat:'其他', items:[
+    { id:'website', name:'品牌網站', price:60000, spec:'1式',
+      flow:'以品牌視覺延伸2款為網站製作，擇1進行2至3次的小幅度修改直至完稿。',
+      content:'①每月流量：1,500 GB\n②磁碟空間：20 GB\n③記憶體：2 GB\n④國際網域/組：.com 網域\n備註：網站維運服務，每年續約費用為新台幣6,000元' },
+    { id:'custom', name:'自訂項目', price:0, spec:'',
+      flow:'',
+      content:'' },
+  ]},
+];
+
+const DEFAULT_NOTES = '確認報價後，將先收取總金額50%作為頭款，於所有設計結案後收取尾款。\n本報價單不包含印刷執行，若需協助，將酌收總價之10%作為服務費。\n經雙方共同協議簽名及簽回後，此報價合約內容即生效。\n付清款項後，該作品著作使用權專屬授權提供，除作品展覽、其他教學、公益活動展示等情形以外。';
+
+/* 狀態 */
+let quoteItems = []; // { id, name, flow, content, price, spec, confirmed, discuss }
+
+/* ── 工具 ── */
+function fmt(n){ return 'NT$ ' + Math.round(n).toLocaleString('zh-TW'); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function addDays(d,n){ const dt=new Date(d); dt.setDate(dt.getDate()+n); return dt.toISOString().slice(0,10); }
+function fmtDate(d){ return d ? d.replace(/-/g,'/') : '—'; }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function nl(s){ return (s||'').replace(/\n/g,'<br>'); }
+
+/* ── 初始化品項庫 ── */
+function buildLib(){
+  const c = document.getElementById('libContainer');
+  c.innerHTML = CATALOG.map(cat => `
+    <div class="lib-cat">
+      <div class="lib-cat-title">${cat.cat}</div>
+      ${cat.items.map(it => `
+        <div class="lib-item" onclick="toggleItem('${it.id}')">
+          <input type="checkbox" id="lib_${it.id}" onclick="event.stopPropagation();toggleItem('${it.id}')">
+          <span class="lib-item-name">${it.name}</span>
+          <span class="lib-item-price">${it.price ? fmt(it.price).replace('NT$ ','') : '—'}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function findCatalogItem(id){
+  for(const cat of CATALOG) for(const it of cat.items) if(it.id===id) return it;
+  return null;
+}
+
+function toggleItem(id){
+  const chk = document.getElementById('lib_'+id);
+  const exists = quoteItems.findIndex(q=>q.id===id);
+  if(exists>=0){
+    quoteItems.splice(exists,1);
+    if(chk) chk.checked = false;
+  } else {
+    const src = findCatalogItem(id);
+    if(!src) return;
+    quoteItems.push({
+      id: src.id,
+      name: src.name,
+      flow: src.flow,
+      content: src.content,
+      price: src.price,
+      spec: src.spec,
+      confirmed: false,
+      discuss: false
+    });
+    if(chk) chk.checked = true;
+  }
+  renderQuoteItems();
+  sync();
+}
+
+/* ── 渲染設計師品項列表 ── */
+function renderQuoteItems(){
+  const container = document.getElementById('quoteItems');
+  const hint = document.getElementById('emptyHint');
+  hint.style.display = quoteItems.length ? 'none' : 'block';
+
+  container.innerHTML = quoteItems.map((it,i) => `
+    <div class="quote-item">
+      <div class="qi-header">
+        <div class="qi-num">${i+1}</div>
+        <input class="qi-name" value="${esc(it.name)}" onchange="quoteItems[${i}].name=this.value;sync()">
+        <button class="qi-del" onclick="removeItem(${i})" title="移除">×</button>
+      </div>
+      <div class="qi-body">
+        ${it.flow ? `<div class="qi-flow"><div class="qi-flow-label">執行方式說明</div>${esc(it.flow)}</div>` : ''}
+        <div class="qi-row">
+          <div><label>數量/規格</label><input value="${esc(it.spec)}" onchange="quoteItems[${i}].spec=this.value;sync()"></div>
+          <div><label>金額 (NT$)</label><input type="number" value="${it.price}" min="0" onchange="quoteItems[${i}].price=+this.value||0;sync()"></div>
+          <div></div>
+        </div>
+        <div><label>內容說明（可修改這次的細節）</label>
+        <textarea rows="4" onchange="quoteItems[${i}].content=this.value;sync()">${esc(it.content)}</textarea></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeItem(i){
+  const id = quoteItems[i].id;
+  quoteItems.splice(i,1);
+  const chk = document.getElementById('lib_'+id);
+  if(chk) chk.checked = false;
+  renderQuoteItems();
+  sync();
+}
+
+/* ── 計算 ── */
+function calcTotals(){
+  const sub = quoteItems.reduce((s,it)=>s+it.price,0);
+  const taxRate = parseFloat(document.getElementById('d_tax_rate').value)||0;
+  const tax = Math.round(sub * taxRate);
+  const total = sub + tax;
+  const dep = parseInt(document.getElementById('d_deposit').value)||50;
+  const head = Math.round(total * dep / 100);
+  return { sub, tax, taxRate, total, head, dep };
+}
+
+/* ── 同步所有模式 ── */
+function sync(){
+  const proj = document.getElementById('d_proj').value;
+  const co   = document.getElementById('d_co').value;
+  const tax  = document.getElementById('d_tax').value;
+  const qd   = document.getElementById('d_qdate').value;
+  const vd   = document.getElementById('d_vdate').value;
+  const notes= document.getElementById('d_notes').value || DEFAULT_NOTES;
+  const { sub, tax: taxAmt, taxRate, total, head, dep } = calcTotals();
+
+  /* 設計師面板數字 */
+  document.getElementById('d_sub').value   = fmt(sub);
+  document.getElementById('d_total').value = fmt(total);
+  document.getElementById('d_head').value  = fmt(head);
+
+  /* 更新備註（頭款金額） */
+  const autoNotes = notes.replace(/收取總金額\d+%作為頭款/g, `收取總金額${dep}%作為頭款`);
+
+  /* 客戶頁面 */
+  document.getElementById('c_proj').textContent   = proj || '（專案名稱）';
+  document.getElementById('c_co').textContent     = co   || '—';
+  document.getElementById('c_tax').textContent    = tax  || '—';
+  document.getElementById('c_qdate').textContent  = fmtDate(qd);
+  document.getElementById('c_vdate').textContent  = fmtDate(vd);
+  document.getElementById('cs_sub').textContent   = fmt(sub);
+  document.getElementById('cs_tax').textContent   = fmt(taxAmt);
+  document.getElementById('cs_total').textContent = fmt(total);
+  const taxRow = document.getElementById('cs_tax_row');
+  if(taxRow) taxRow.style.display = taxRate>0 ? 'flex' : 'none';
+
+  renderClientItems();
+  renderOutput(proj,co,tax,qd,vd,notes,sub,taxAmt,taxRate,total,head,dep);
+}
+
+/* ── 客戶品項渲染 ── */
+function renderClientItems(){
+  const container = document.getElementById('clientItems');
+  if(!quoteItems.length){
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink3);font-size:13px">尚未加入報價項目</div>';
+    return;
+  }
+  container.innerHTML = quoteItems.map((it,i) => {
+    const cls = it.confirmed ? 'is-confirmed' : it.discuss ? 'is-discuss' : '';
+    return `
+    <div class="client-item ${cls}" id="ci_${i}">
+      <div class="ci-top">
+        <div class="ci-checks">
+          <label class="ci-check-btn confirm">
+            <input type="checkbox" ${it.confirmed?'checked':''} onchange="setClientCheck(${i},'confirm',this.checked)">確認
+          </label>
+          <label class="ci-check-btn discuss">
+            <input type="checkbox" ${it.discuss?'checked':''} onchange="setClientCheck(${i},'discuss',this.checked)">討論
+          </label>
+        </div>
+        <div class="ci-content">
+          <div class="ci-name">${esc(it.name)}</div>
+          ${it.content ? `<div class="ci-items">${nl(esc(it.content))}</div>` : ''}
+          ${it.flow ? `<div class="ci-flow">${esc(it.flow)}</div>` : ''}
+        </div>
+        <div class="ci-price">${it.price ? fmt(it.price) : '—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  updateFlagged();
+}
+
+function setClientCheck(i, type, val){
+  if(type==='confirm'){ quoteItems[i].confirmed = val; if(val) quoteItems[i].discuss = false; }
+  if(type==='discuss'){ quoteItems[i].discuss = val; if(val) quoteItems[i].confirmed = false; }
+  renderClientItems();
+}
+
+function updateFlagged(){
+  const flagged = quoteItems.filter(it=>it.discuss);
+  const sec = document.getElementById('flaggedSection');
+  const list = document.getElementById('flaggedList');
+  sec.style.display = flagged.length ? 'block' : 'none';
+  list.innerHTML = flagged.map(it => `
+    <div class="flagged-item">
+      <span>${esc(it.name)}</span>
+      <span>${it.price ? fmt(it.price) : '—'}</span>
+    </div>
+  `).join('');
+}
+
+/* ── 輸出 PDF 渲染 ── */
+function renderOutput(proj,co,tax,qd,vd,notes,sub,taxAmt,taxRate,total,head,dep){
+  const rows = quoteItems.map((it,i) => `
+    <tr>
+      <td class="c">${i+1}</td>
+      <td>
+        <div class="qo-item-name">${esc(it.name)}</div>
+        ${it.flow ? `<div class="qo-item-flow">${esc(it.flow)}</div>` : ''}
+      </td>
+      <td><div class="qo-item-content">${nl(esc(it.content))}</div></td>
+      <td class="r">${it.price ? fmt(it.price) : '—'}</td>
+    </tr>
+  `).join('');
+
+  const taxRow = taxRate>0 ? `<div class="qo-tr"><span>營業稅</span><span>${fmt(taxAmt)}</span></div>` : '';
+  const noteLines = (notes||DEFAULT_NOTES).split('\n').filter(l=>l.trim()).map(l=>`• ${esc(l)}`).join('<br>');
+  const tail = `確認報價後，將先收取總金額${dep}%作為頭款 ${fmt(head)}，於所有設計結案後收取尾款 ${fmt(total-head)}。`;
+
+  document.getElementById('quoteOut').innerHTML = `
+    <div class="qo-top">
+      <div class="qo-co">Islander Made 島民制作視覺整合</div>
+      <div class="qo-title">QUOTATION</div>
+      <div class="qo-region">Taiwan, ${new Date().getFullYear()}</div>
+    </div>
+    <div class="qo-meta">
+      <div class="qo-meta-block"><div class="qo-mk">專案名稱</div><div class="qo-mv">${esc(proj)||'—'}</div></div>
+      <div class="qo-meta-block"><div class="qo-mk">公司名稱</div><div class="qo-mv">${esc(co)||'—'}</div></div>
+      <div class="qo-meta-block"><div class="qo-mk">報價日期</div><div class="qo-mv">${fmtDate(qd)}</div></div>
+      <div class="qo-meta-block"><div class="qo-mk">統一編號</div><div class="qo-mv">${esc(tax)||'—'}</div></div>
+      <div class="qo-meta-block"><div class="qo-mk">有效日期</div><div class="qo-mv">${fmtDate(vd)}</div></div>
+      <div class="qo-meta-block"></div>
+    </div>
+    <div class="qo-bank">
+      匯款資訊｜匯款手續費請自行負擔<br>
+      銀行代號｜<strong>006 合作金庫商業銀行 枋寮分行</strong><br>
+      戶名｜<strong>島民設計</strong>　帳號｜<strong>5838717131420</strong>
+    </div>
+    <table class="qo-table">
+      <colgroup><col class="c0"><col class="c1"><col class="c2"><col class="c3"></colgroup>
+      <thead><tr>
+        <th class="c">項次</th><th>專案名稱</th><th>內容說明</th><th class="r">金額</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="qo-notes">
+      <div style="margin-bottom:4px;font-weight:700;font-size:10px;color:var(--ink)">備註</div>
+      ${tail}<br>${noteLines}
+    </div>
+    <div class="qo-totals">
+      <div class="qo-total-box">
+        <div class="qo-tr"><span>小計</span><span>${fmt(sub)}</span></div>
+        ${taxRow}
+        <div class="qo-tr grand"><span>總金額</span><span>${fmt(total)}</span></div>
+      </div>
+    </div>
+    <div class="qo-sig">
+      <div class="qo-sig-box"><div class="qo-sig-label">客戶簽名：</div><div class="qo-sig-line"></div></div>
+      <div class="qo-sig-box"><div class="qo-sig-label">設計師簽章：</div><div class="qo-sig-line"></div></div>
+    </div>
+  `;
+}
+
+/* ── 模式切換 ── */
+function setMode(m){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+m).classList.add('active');
+  const idx = {designer:0,client:1,output:2}[m];
+  document.querySelectorAll('.mode-tab')[idx].classList.add('active');
+  const hints = {designer:'填寫報價內容',client:'客戶確認頁面',output:'預覽並列印'};
+  document.getElementById('modeHint').textContent = hints[m];
+  if(m==='client') renderClientItems();
+  sync();
+}
+
+/* ── 初始化 ── */
+buildLib();
+const t = today();
+document.getElementById('d_qdate').value = t;
+document.getElementById('d_vdate').value = addDays(t,7);
+document.getElementById('d_notes').value = DEFAULT_NOTES;
+sync();
+</script>
+</body>
+</html>
+
 
   :root {
     --ink: #1a1a1a;
